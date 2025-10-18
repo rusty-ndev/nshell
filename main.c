@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define LSH_RL_BUFSIZE 1024 
+#define SH_RL_BUFSIZE 1024 
+#define SH_TOK_BUFSIZE 64 
+#define SH_TOK_DELIM " \t\r\n\a"
 
 void sh_loop(void){
 
@@ -21,9 +24,41 @@ void sh_loop(void){
 		
 }
 
+char** sh_split_line(char* line){
+
+	int bufsize = SH_TOK_BUFSIZE , position = 0 ; 
+    char **tokens = malloc(bufsize * sizeof(char*));
+    char *token;
+
+  if (!tokens) {
+    fprintf(stderr, "lsh: allocation error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  token = strtok(line, SH_TOK_DELIM);
+  while (token != NULL) {
+    tokens[position] = token;
+    position++;
+
+    if (position >= bufsize) {
+      bufsize += SH_TOK_BUFSIZE;
+      tokens = realloc(tokens, bufsize * sizeof(char*));
+      if (!tokens) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    token = strtok(NULL, SH_TOK_DELIM);
+  }
+  tokens[position] = NULL;
+  return tokens;
+} 
+
+
 char *sh_read_line(void){
 
-	int bufsize = LSH_RL_BUFSIZE;
+	int bufsize = SH_RL_BUFSIZE;
 	int position = 0;
 	char *buffer = malloc(sizeof(char) * bufsize); 
 	int c; 
@@ -49,7 +84,7 @@ char *sh_read_line(void){
 
 		//if we have exceeded the buffer, reallocate
 		if(position >= bufsize ){
-			bufsize += LSH_RL_BUFSIZE; 
+			bufsize += SH_RL_BUFSIZE; 
 			buffer = realloc(buffer, bufsize); 
 			if(!buffer){
 				fprintf(stderr, "sh: allocation error\n"); 
